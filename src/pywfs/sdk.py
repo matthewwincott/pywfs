@@ -164,7 +164,8 @@ class WfsLib(object):
         dll.WFS_TakeSpotfieldImageAutoExpos.restype = ViStatus
         dll.WFS_TakeSpotfieldImageAutoExpos.argtypes = [ViSession, POINTER(ViReal64), POINTER(ViReal64)]
 
-        # WFS_GetSpotfieldImage left out
+        dll.WFS_GetSpotfieldImage.restype = ViStatus
+        dll.WFS_GetSpotfieldImage.argtypes = [ViSession, POINTER(ViUInt8), POINTER(ViInt32), POINTER(ViInt32)]
 
         dll.WFS_GetSpotfieldImageCopy.restype = ViStatus
         dll.WFS_GetSpotfieldImageCopy.argtypes = [ViSession, ViUInt8, POINTER(ViInt32), POINTER(ViInt32)]  # ViUInt8[]
@@ -469,6 +470,18 @@ class WfsSDK(object):
         WfsLib.result(self._dll.WFS_TakeSpotfieldImageAutoExpos(self._handle, byref(self.exposure_time_act), byref(self.master_gain_act)))
         log.spam(f"exposure_time_act {self.exposure_time_act.value}")
         log.spam(f"master_gain_act {self.master_gain_act.value}")
+
+    def get_spot_field_image_copy(self, width=1280, height=1024):
+        """
+        Return image using function GetSpotfieldImageCopy().
+        """
+        log.spam(f"returning acquired spot field image")
+        rows = ViInt32()
+        cols = ViInt32()
+        image = np.empty(shape=(height, width),dtype=np.uint8)
+        WfsLib.result(self._dll.WFS_GetSpotfieldImage(self._handle, image.ctypes.data_as(POINTER(ViUInt8)), byref(rows), byref(cols)))
+        print(rows.value, cols.value)
+        return image
 
     def calc_spot(self, dynamic_noise_cut=True, calculate_diameters=False):
         """
